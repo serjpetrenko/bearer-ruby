@@ -4,6 +4,7 @@ RSpec.describe Bearer do
   end
 
   it "does something useful" do
+    pending
     expect(false).to eq(true)
   end
 end
