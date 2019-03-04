@@ -16,7 +16,7 @@ pipeline {
     stages {
         stage("Rubocop") {
             steps {
-                container("ruby253") {
+                container("ruby261") {
                     ansiColor('xterm') {
                         sh "apk add --update git make build-base"
                         sh "bundle --jobs 20 --retry 5 --path=vendor"
@@ -28,7 +28,7 @@ pipeline {
 
         stage("Tests") {
             steps {
-                container("ruby253") {
+                container("ruby261") {
                     ansiColor('xterm') {
                         sh "bin/test"
                     }

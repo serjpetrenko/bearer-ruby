@@ -5,8 +5,8 @@ metadata:
     name: bearer-ruby
 spec:
   containers:
-  - name: ruby253
-    image: ruby:2.5.3-alpine
+  - name: ruby261
+    image: ruby:2.6.1-alpine
     command:
     - cat
     tty: true

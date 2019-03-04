@@ -16,6 +16,16 @@ RSpec.describe Bearer do
     expect(Bearer::Configuration.secret).to eq "secret"
   end
 
+  it "allows to setup the configuration", :aggregate_failures do
+    Bearer::Configuration.api_key = "api_key"
+    Bearer::Configuration.client_id = "client_id"
+    Bearer::Configuration.secret = "secret"
+
+    expect(Bearer::Configuration.api_key).to eq "api_key"
+    expect(Bearer::Configuration.client_id).to eq "client_id"
+    expect(Bearer::Configuration.secret).to eq "secret"
+  end
+
   it "raises an error when key is missing", :aggregate_failures do
     expect { Bearer::Configuration.api_key }
       .to raise_error Bearer::Errors::Configuration, "Bearer api_key is missing!"
