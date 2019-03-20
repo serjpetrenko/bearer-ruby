@@ -6,7 +6,7 @@ require "net/http"
 require "json"
 
 module Bearer
-  INT_URL = "https://int.staging.bearer.sh/api/v3/intents/backend/"
+  INT_URL = "https://int.bearer.sh/api/v3/functions/backend/"
 
   def self.call(integration_uuid, integration_name, params: {}, body: {})
     uri = URI("#{INT_URL}#{integration_uuid}/#{integration_name}")

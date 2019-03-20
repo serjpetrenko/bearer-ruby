@@ -4,7 +4,7 @@ require "webmock/rspec"
 
 RSpec.describe Bearer do
   before do
-    stub_request(:post, "https://int.staging.bearer.sh/api/v3/intents/backend/4l1c3-integration/fetch-goats?q=dolly")
+    stub_request(:post, "https://int.bearer.sh/api/v3/functions/backend/4l1c3-integration/fetch-goats?q=dolly")
       .with(
         body: "{}",
         headers: {
@@ -12,7 +12,7 @@ RSpec.describe Bearer do
           "Accept-Encoding" => "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
           "Authorization" => "api_key",
           "Content-Type" => "application/json",
-          "Host" => "int.staging.bearer.sh",
+          "Host" => "int.bearer.sh",
           "User-Agent" => "Bearer (0.1.0)"
         }
       )
