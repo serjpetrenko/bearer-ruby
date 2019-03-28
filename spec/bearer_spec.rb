@@ -13,7 +13,7 @@ RSpec.describe Bearer do
           "Authorization" => "api_key",
           "Content-Type" => "application/json",
           "Host" => "int.bearer.sh",
-          "User-Agent" => "Bearer (0.1.0)"
+          "User-Agent" => "Bearer (0.1.1)"
         }
       )
       .to_return(status: 200, body: '{"ok":true}', headers: {})
@@ -29,6 +29,16 @@ RSpec.describe Bearer do
       Bearer::Configuration.client_id = "client_id"
       Bearer::Configuration.secret = "secret"
       expect(Bearer.call("4l1c3-integration", "fetch-goats", params: { q: "dolly" })).to eq("ok" => true)
+    end
+  end
+
+  describe ".invoke" do
+    let(:uri) { stub_const("URI").as_stubbed_const(transfer_nested_constants: true) }
+    it "allows to call bearer backend function" do
+      Bearer::Configuration.api_key = "api_key"
+      Bearer::Configuration.client_id = "client_id"
+      Bearer::Configuration.secret = "secret"
+      expect(Bearer.invoke("4l1c3-integration", "fetch-goats", params: { q: "dolly" })).to eq("ok" => true)
     end
   end
 end
