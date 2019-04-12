@@ -6,11 +6,11 @@ require "net/http"
 require "json"
 
 module Bearer
-  INT_URL = "https://int.bearer.sh/api/v3/functions/backend/"
+  INT_URL = "https://int.bearer.sh/api/v4/functions/backend/"
 
   class << self
-    def call(integration_uuid, integration_name, params: {}, body: {})
-      uri = URI("#{INT_URL}#{integration_uuid}/#{integration_name}")
+    def call(integration_buid, integration_name, params: {}, body: {})
+      uri = URI("#{INT_URL}#{integration_buid}/#{integration_name}")
       uri.query = params.map { |k, v| "#{k}=#{v}" }.join("&")
 
       req = Net::HTTP::Post.new(
