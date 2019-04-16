@@ -4,7 +4,7 @@ require "webmock/rspec"
 
 RSpec.describe Bearer do
   before do
-    stub_request(:post, "https://int.bearer.sh/api/v4/functions/backend/4l1c3-integration/fetch-goats?q=dolly")
+    stub_request(:post, "https://int.bearer.sh/api/v4/functions/backend/4l1c3/fetch-goats?q=dolly")
       .with(
         body: "{}",
         headers: {
@@ -28,7 +28,7 @@ RSpec.describe Bearer do
       Bearer::Configuration.api_key = "api_key"
       Bearer::Configuration.client_id = "client_id"
       Bearer::Configuration.secret = "secret"
-      expect(Bearer.call("4l1c3-integration", "fetch-goats", params: { q: "dolly" })).to eq("ok" => true)
+      expect(Bearer.call("4l1c3", "fetch-goats", params: { q: "dolly" })).to eq("ok" => true)
     end
   end
 
@@ -38,7 +38,7 @@ RSpec.describe Bearer do
       Bearer::Configuration.api_key = "api_key"
       Bearer::Configuration.client_id = "client_id"
       Bearer::Configuration.secret = "secret"
-      expect(Bearer.invoke("4l1c3-integration", "fetch-goats", params: { q: "dolly" })).to eq("ok" => true)
+      expect(Bearer.invoke("4l1c3", "fetch-goats", params: { q: "dolly" })).to eq("ok" => true)
     end
   end
 end

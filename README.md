@@ -1,8 +1,6 @@
 # Bearer
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/bearer`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+This gem is a Ruby client to interact with [Bearer](https://www.bearer.sh)'s integrations.
 
 ## Installation
 
@@ -22,7 +20,28 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Get your Bearer's [credentials](https://app.bearer.sh/keys) and setup Bearer as follow:
+
+```ruby
+Bearer::Configuration.setup do |config|
+    config.api_key = "secret_api_key" # copy and paste the `API key`
+    config.client_id = "client_id" # copy and paste the `Client ID`
+end
+```
+
+Invoke the Function:
+
+```ruby
+Bearer.invoke(
+    "4l1c3", # Integration UUID
+    "fetch-goats", # Function Name
+    params: {
+        setupId: "my-setup-id"
+    }
+)
+```
+
+_NB: If you are using Rails, have a look at the [Rails](https://github.com/bearer/bearer-rails) gem_
 
 ## Development
 
@@ -32,8 +51,8 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/bearer. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/bearer/bearer-ruby. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 ## Code of Conduct
 
-Everyone interacting in the Bearer project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/bearer/blob/master/CODE_OF_CONDUCT.md).
+Everyone interacting in the Bearer project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/bearer/bearer-ruby/blob/master/CODE_OF_CONDUCT.md).

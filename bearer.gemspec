@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = "bearer"
   spec.version = Bearer::VERSION
   spec.authors = ["Bearer Team<engineering@bearer.sh>"]
-  spec.email = ["antoine@bearer.sh"]
+  spec.email = ["engineering@bearer.sh"]
 
   spec.summary = %q{Bearer Ruby}
   spec.description = %q{Bearer Ruby description}
