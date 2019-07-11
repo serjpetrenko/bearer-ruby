@@ -1,6 +1,8 @@
 # Bearer
 
-This gem is a Ruby client to interact with [Bearer](https://www.bearer.sh)'s integrations.
+This gem is a Ruby client to interact with APIs via [Bearer](https://www.bearer.sh).
+
+_NB: If you are using Rails, also have a look at the [Rails](https://github.com/bearer/bearer-rails) gem_
 
 ## Installation
 
@@ -12,36 +14,79 @@ gem 'bearer'
 
 And then execute:
 
-    $ bundle
-
+```shell
+$ bundle
+```
 Or install it yourself as:
 
-    $ gem install bearer
+```shell
+$ gem install bearer
+```
 
 ## Usage
 
-Get your Bearer's [credentials](https://app.bearer.sh/keys) and setup Bearer as follow:
+Grab your Bearer [API Key](https://app.bearer.sh/keys) and integration id from
+the [Dashboard](https://app.bearer.sh) and then you can use the client as follows:
+
+### Calling any APIs
+
+```ruby
+require "bearer"
+
+bearer = Bearer.new("your api key") # find it on https://app.bearer.sh/keys
+github = (
+  bearer
+    .integration("your integration id") # you'll find it on the Bearer dashboard https://app.bearer.sh
+    .auth("your auth id") # Create an auth id for your integration via the dashboard
+)
+
+puts JSON.parse(github.get("/repositories").body)
+```
+
+We use `Net::HTTP` internally and we
+return it's response from the request methods (`request`,
+`get`, `head`, `post`, `put`, `patch`, `delete`).
+
+More advanced examples:
+
+```ruby
+# With query parameters
+puts JSON.parse(github.get("/repositories", query: { since: 364 }).body)
+
+# With body data
+puts JSON.parse(github.post("/user/repos", body: { name: "Just setting up my Bearer.sh" }).body)
+```
+
+### Calling custom functions
+
+```ruby
+require "bearer"
+
+bearer = Bearer.new("your api key")
+github = bearer.integration("your integration id")
+
+puts github.invoke("your function name")
+```
+
+[Learn more](https://docs.bearer.sh/working-with-bearer/manipulating-apis) on how to use custom functions with Bearer.sh.
+
+### Global configuration
+
+You can configure the client globally with your [API Key](https://app.bearer.sh/keys):
 
 ```ruby
 Bearer::Configuration.setup do |config|
-    config.api_key = "secret_api_key" # copy and paste the `API key`
-    config.client_id = "client_id" # copy and paste the `Client ID`
+  config.api_key = "your api key" # copy and paste the `API key`
 end
 ```
 
-Invoke the Function:
+You can now use the client without needing to pass the API Key each time:
 
 ```ruby
-Bearer.invoke(
-    "4l1c3", # Integration UUID
-    "fetch-goats", # Function Name
-    params: {
-        setupId: "my-setup-id"
-    }
-)
-```
+github = Bearer.integration("your integration id").auth("your auth id")
 
-_NB: If you are using Rails, have a look at the [Rails](https://github.com/bearer/bearer-rails) gem_
+puts JSON.parse(github.get("/repositories").body)
+```
 
 ## Development
 

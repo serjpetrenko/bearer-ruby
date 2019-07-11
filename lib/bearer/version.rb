@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-module Bearer
-  VERSION = "0.2.0"
+class Bearer
+  VERSION = "1.0.0"
 end

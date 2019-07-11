@@ -4,11 +4,11 @@ require "singleton"
 
 require_relative "./errors"
 
-module Bearer
+class Bearer
   class Configuration
     include Singleton
 
-    FIELDS = %i[api_key client_id secret].freeze
+    FIELDS = %i[api_key client_id secret integration_host].freeze
 
     attr_writer(*FIELDS)
 
