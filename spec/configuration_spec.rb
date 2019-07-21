@@ -34,4 +34,8 @@ RSpec.describe Bearer do
     expect { Bearer::Configuration.secret }
       .to raise_error Bearer::Errors::Configuration, "Bearer secret is missing!"
   end
+
+  it "does NOT raise an error when a missing key is optional" do
+    expect { Bearer::Configuration.integration_host }.not_to raise_error
+  end
 end

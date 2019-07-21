@@ -21,7 +21,7 @@ RSpec.describe Bearer::Integration do
       "Authorization" => "test-api-key",
       "Content-Type" => "application/json",
       "Host" => "int.example.com",
-      "User-Agent" => "Bearer (0.2.0)"
+      "User-Agent" => /\ABearer \([0-9.]+\)\z/
     }
   end
 

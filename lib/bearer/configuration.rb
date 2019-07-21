@@ -9,14 +9,17 @@ class Bearer
     include Singleton
 
     FIELDS = %i[api_key client_id secret integration_host].freeze
+    OPTIONAL_FIELDS = %i[integration_host].freeze
 
     attr_writer(*FIELDS)
 
     FIELDS.each do |field|
+      is_optional = OPTIONAL_FIELDS.include?(field)
+
       define_method field do
         value = instance_variable_get(:"@#{field}")
 
-        raise ::Bearer::Errors::Configuration, "Bearer #{field} is missing!" unless value
+        raise ::Bearer::Errors::Configuration, "Bearer #{field} is missing!" unless value || is_optional
 
         value
       end

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bearer (1.0.0)
+    bearer (1.0.1)
 
 GEM
   remote: https://rubygems.org/

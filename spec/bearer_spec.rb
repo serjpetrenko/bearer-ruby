@@ -13,7 +13,7 @@ RSpec.describe Bearer do
           "Authorization" => "api_key",
           "Content-Type" => "application/json",
           "Host" => "int.bearer.sh",
-          "User-Agent" => "Bearer (0.2.0)"
+          "User-Agent" => /\ABearer \([0-9.]+\)\z/
         }
       )
       .to_return(status: 200, body: '{"ok":true}', headers: {})
