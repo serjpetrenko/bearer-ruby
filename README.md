@@ -1,6 +1,6 @@
 # Bearer
 
-This gem is a Ruby client to interact with APIs via [Bearer](https://www.bearer.sh).
+This gem is a Ruby client to universally call any API using [Bearer.sh](https://www.bearer.sh).
 
 _NB: If you are using Rails, also have a look at the [Rails](https://github.com/bearer/bearer-rails) gem_
 

@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ["engineering@bearer.sh"]
 
   spec.summary = %q{Bearer Ruby}
-  spec.description = %q{Bearer Ruby description}
+  spec.description = %q{Ruby client to universally call any API using Bearer.sh}
   spec.homepage = "https://www.bearer.sh"
   spec.licenses = ['MIT']
   if spec.respond_to?(:metadata)
