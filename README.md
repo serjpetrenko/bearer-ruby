@@ -25,7 +25,7 @@ $ gem install bearer
 
 ## Usage
 
-Grab your Bearer [API Key](https://app.bearer.sh/keys) and integration id from
+Grab your Bearer [Secret Key](https://app.bearer.sh/keys) and integration id from
 the [Dashboard](https://app.bearer.sh) and then you can use the client as follows:
 
 ### Calling any APIs
@@ -33,7 +33,7 @@ the [Dashboard](https://app.bearer.sh) and then you can use the client as follow
 ```ruby
 require "bearer"
 
-bearer = Bearer.new("your api key") # find it on https://app.bearer.sh/keys
+bearer = Bearer.new("BEARER_SECRET_KEY") # find it on https://app.bearer.sh/keys
 github = (
   bearer
     .integration("your integration id") # you'll find it on the Bearer dashboard https://app.bearer.sh
@@ -62,7 +62,7 @@ puts JSON.parse(github.post("/user/repos", body: { name: "Just setting up my Bea
 ```ruby
 require "bearer"
 
-bearer = Bearer.new("your api key")
+bearer = Bearer.new("BEARER_SECRET_KEY")
 github = bearer.integration("your integration id")
 
 puts github.invoke("your function name")
@@ -72,15 +72,15 @@ puts github.invoke("your function name")
 
 ### Global configuration
 
-You can configure the client globally with your [API Key](https://app.bearer.sh/keys):
+You can configure the client globally with your [Secret Key](https://app.bearer.sh/keys):
 
 ```ruby
 Bearer::Configuration.setup do |config|
-  config.api_key = "your api key" # copy and paste the `API key`
+  config.api_key = "BEARER_SECRET_KEY" # copy and paste your Bearer `Secret Key`
 end
 ```
 
-You can now use the client without needing to pass the API Key each time:
+You can now use the client without having to pass the Secret Key each time:
 
 ```ruby
 github = Bearer.integration("your integration id").auth("your auth id")
