@@ -18,7 +18,10 @@ Metrics/LineLength:
   Exclude:
     - 'config/**/*'
     - 'spec/**/*'
-  Max: 120
+  Max: 160
+
+Metrics/ClassLength:
+  Max: 200
 
 Metrics/BlockLength:
   Exclude:
@@ -37,4 +40,7 @@ Layout/AlignParameters:
   Enabled: false
 
 Bundler/OrderedGems:
+  Enabled: false
+
+Metrics/ParameterLists:
   Enabled: false

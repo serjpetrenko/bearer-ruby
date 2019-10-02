@@ -5,13 +5,13 @@ RSpec.describe Bearer::Integration do
     described_class.new(
       integration_host: integration_host,
       integration_id: integration_id,
-      api_key: api_key,
+      secret_key: secret_key,
     )
   end
 
   let(:integration_host) { "https://int.example.com" }
   let(:integration_id) { "test-integration-id" }
-  let(:api_key) { "test-api-key" }
+  let(:secret_key) { "test-api-key" }
 
   let(:base_url) { "https://int.example.com/api/v4/functions/backend/#{integration_id}" }
   let(:headers) do
@@ -21,7 +21,7 @@ RSpec.describe Bearer::Integration do
       "Authorization" => "test-api-key",
       "Content-Type" => "application/json",
       "Host" => "int.example.com",
-      "User-Agent" => /\ABearer \([0-9.]+\)\z/
+      "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})"
     }
   end
 
@@ -65,10 +65,9 @@ RSpec.describe Bearer::Integration do
       {
         "Accept" => "*/*",
         "Accept-Encoding" => "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
-        "Authorization" => api_key,
+        "Authorization" => secret_key,
         "Host" => "int.example.com",
-        # FIXME: We try to set this but it isn't working
-        "User-Agent" => "Ruby",
+        "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})",
         "Bearer-Proxy-test" => "header"
       }
     end

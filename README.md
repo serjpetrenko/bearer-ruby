@@ -76,7 +76,7 @@ You can configure the client globally with your [Secret Key](https://app.bearer.
 
 ```ruby
 Bearer::Configuration.setup do |config|
-  config.api_key = "BEARER_SECRET_KEY" # copy and paste your Bearer `Secret Key`
+  config.secret_key = "BEARER_SECRET_KEY" # copy and paste your Bearer `Secret Key`
 end
 ```
 

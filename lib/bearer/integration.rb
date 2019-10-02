@@ -2,6 +2,7 @@
 
 require "net/http"
 require "json"
+require "forwardable"
 
 require_relative "./errors"
 require_relative "./version"
@@ -10,19 +11,22 @@ class Bearer
   class Integration
     FUNCTIONS_PATH = "api/v4/functions/backend"
     PROXY_FUNCTION_NAME = "bearer-proxy"
+    extend Forwardable
 
     def initialize(
       integration_id:,
       integration_host:,
-      api_key:,
+      secret_key:,
+      read_timeout: nil,
       setup_id: nil,
       auth_id: nil
     )
       @integration_id = integration_id
       @integration_host = integration_host
-      @api_key = api_key
+      @secret_key = secret_key
       @setup_id = setup_id
       @auth_id = auth_id
+      @read_timeout = read_timeout
     end
 
     # Public: Invoke an integration function
@@ -36,8 +40,8 @@ class Bearer
       url = "#{@integration_host}/#{FUNCTIONS_PATH}/#{@integration_id}/#{function_name}"
       headers = {
         "Content-Type" => "application/json",
-        "Authorization": @api_key,
-        "User-Agent" => "Bearer (#{Bearer::VERSION})"
+        "Authorization": @secret_key,
+        "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})"
       }
 
       response = make_request(method: "POST", url: url, query: query, body: body, headers: headers)
@@ -54,7 +58,7 @@ class Bearer
       self.class.new(
         integration_id: @integration_id,
         integration_host: @integration_host,
-        api_key: @api_key,
+        secret_key: @secret_key,
         setup_id: setup_id,
         auth_id: @auth_id
       )
@@ -67,7 +71,7 @@ class Bearer
       self.class.new(
         integration_id: @integration_id,
         integration_host: @integration_host,
-        api_key: @api_key,
+        secret_key: @secret_key,
         setup_id: @setup_id,
         auth_id: auth_id
       )
@@ -129,8 +133,8 @@ class Bearer
     # query    - parameters to add to the URL's query string
     def request(method, endpoint, headers: nil, body: nil, query: nil)
       pre_headers = {
-        "Authorization": @api_key,
-        "User-Agent": "Bearer.sh",
+        "Authorization": @secret_key,
+        "User-Agent": "Bearer-Ruby (#{Bearer::VERSION})",
         "Bearer-Auth-Id": @auth_id,
         "Bearer-Setup-Id": @setup_id,
         # TODO: Remove this when integration service content type support is fixed
@@ -150,11 +154,21 @@ class Bearer
 
     private
 
+    # @return [Hash]
+    def http_client_params
+      Bearer::Configuration.http_client_params
+    end
+
     def make_request(method:, url:, query:, body:, headers:)
       parsed_url = URI(url)
       parsed_url.query = URI.encode_www_form(query) if query
 
-      Net::HTTP.start(parsed_url.hostname, parsed_url.port, use_ssl: parsed_url.scheme == "https") do |http|
+      Net::HTTP.start(
+        parsed_url.hostname,
+        parsed_url.port,
+        use_ssl: parsed_url.scheme == "https",
+        **http_client_params
+      ) do |http|
         http.send_request(method, parsed_url, body ? body.to_json : nil, headers)
       end
     end
