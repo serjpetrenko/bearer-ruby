@@ -57,19 +57,6 @@ puts JSON.parse(github.get("/repositories", query: { since: 364 }).body)
 puts JSON.parse(github.post("/user/repos", body: { name: "Just setting up my Bearer.sh" }).body)
 ```
 
-### Calling custom functions
-
-```ruby
-require "bearer"
-
-bearer = Bearer.new("BEARER_SECRET_KEY")
-github = bearer.integration("your integration id")
-
-puts github.invoke("your function name")
-```
-
-[Learn more](https://docs.bearer.sh/working-with-bearer/manipulating-apis) on how to use custom functions with Bearer.sh.
-
 ### Global configuration
 
 You can configure the client globally with your [Secret Key](https://app.bearer.sh/keys):
