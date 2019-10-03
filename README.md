@@ -89,7 +89,7 @@ puts JSON.parse(github.get("/repositories").body)
 ```
 ### Setting the request timeout
 
-By default bearer client read and open timeouts are set to 5 seconds. Bearer allows to increase the read timeout to up to 30 seconds
+By default in bearer client read and open timeouts are set to 5 seconds. Bearer allows to increase the read timeout to up to 30 seconds
 
 ```ruby
 Bearer::Configuration.setup do |config|
