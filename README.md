@@ -87,6 +87,16 @@ github = Bearer.integration("your integration id").auth("your auth id")
 
 puts JSON.parse(github.get("/repositories").body)
 ```
+### Setting the request timeout
+
+By default bearer client read and open timeouts are set to 5 seconds. Bearer allows to increase the read timeout to up to 30 seconds
+
+```ruby
+Bearer::Configuration.setup do |config|
+  # increase the request timeout to 10 seconds, and reduce the open connection timeout to 1 second
+  config.http_client_params = { read_timeout: 10, open_timeout: 1 } 
+end
+```
 
 ## Development
 
