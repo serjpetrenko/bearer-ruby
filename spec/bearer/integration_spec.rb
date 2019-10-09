@@ -1,19 +1,21 @@
+# frozen_string_literal: true
+
 require "webmock/rspec"
 
 RSpec.describe Bearer::Integration do
   subject(:client) do
     described_class.new(
-      integration_host: integration_host,
+      host: host,
       integration_id: integration_id,
-      secret_key: secret_key,
+      secret_key: secret_key
     )
   end
 
-  let(:integration_host) { "https://int.example.com" }
+  let(:host) { "https://int.example.com" }
   let(:integration_id) { "test-integration-id" }
   let(:secret_key) { "test-api-key" }
 
-  let(:base_url) { "https://int.example.com/api/v4/functions/backend/#{integration_id}" }
+  let(:base_url) { "https://int.example.com/#{integration_id}" }
   let(:headers) do
     {
       "Accept" => "*/*",
@@ -25,42 +27,16 @@ RSpec.describe Bearer::Integration do
     }
   end
 
-  let(:success_payload) { {"data" => "It Works!!"} }
+  let(:success_payload) { { "data" => "It Works!!" } }
   let(:success_response) { success_payload.to_json }
   let(:body_payload) { { body: "data" } }
   let(:body) { body_payload.to_json }
 
-  describe "#invoke" do
-    it "makes a request to the function and returns the response" do
-      query = { q: "dolly" }
-
-      stub_request(:post, "#{base_url}/fetch-goats")
-        .with(body: body, headers: headers, query: query)
-        .to_return(status: 200, body: success_response)
-
-      response = client.invoke("fetch-goats", query: query, body: body_payload)
-
-      expect(response).to eq(success_payload)
-    end
-
-    it "throws a FunctionError if the function has an error response" do
-      error_json = '{"message":"Oh no!"}'
-
-      stub_request(:post, "#{base_url}/error")
-        .with(headers: headers)
-        .to_return(status: 200, body: %({"error":#{error_json}}))
-
-      expect { client.invoke("error") }.to raise_error(Bearer::Errors::FunctionError, error_json) do |error|
-        expect(error.data).to eq("message" => "Oh no!")
-      end
-    end
-  end
-
   context "making requests" do
-    let(:proxy_url) { "#{base_url}/bearer-proxy/test" }
+    let(:proxy_url) { "#{base_url}/test" }
     let(:endpoint) { "/test" }
 
-    let(:query) {  }
+    let(:query) {}
     let(:sent_headers) do
       {
         "Accept" => "*/*",
@@ -68,7 +44,6 @@ RSpec.describe Bearer::Integration do
         "Authorization" => secret_key,
         "Host" => "int.example.com",
         "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})",
-        "Bearer-Proxy-test" => "header"
       }
     end
 
@@ -163,13 +138,43 @@ RSpec.describe Bearer::Integration do
       let(:setup_id) { "test-setup-id" }
       let(:setup_sent_headers) { sent_headers.merge("Bearer-Setup-Id" => setup_id) }
 
-      it "sends the auth id in the Bearer-Auth-Id header" do
+      it "sends the setup id in the Bearer-Auth-Id header" do
         stub_request(:get, proxy_url).with(headers: setup_sent_headers).to_return(status: 200)
 
         response = client.setup(setup_id).get("/test", headers: headers)
 
         expect(response.code).to eq("200")
       end
+    end
+  end
+
+  describe "setting http client per integration" do
+    subject(:client) do
+      described_class.new(
+        host: host,
+        integration_id: integration_id,
+        secret_key: secret_key,
+        http_client_settings: { read_timeout: 1 }
+      )
+    end
+
+    before do
+      stub_request(:get, "https://int.example.com/test-integration-id/test")
+        .with(
+          headers: {
+            "Accept" => "*/*",
+            "Accept-Encoding" => "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
+            "Authorization" => "test-api-key",
+            "Content-Type" => "application/json",
+            "Host" => "int.example.com",
+            "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})"
+          }
+        )
+        .to_return(status: 200, body: "", headers: {})
+    end
+    it "respects http client integration settings" do
+      expect(Net::HTTP).to receive(:start).with("int.example.com", 443, open_timeout: 5, read_timeout: 1, use_ssl: true)
+      client.get("/test")
     end
   end
 end

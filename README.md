@@ -81,8 +81,14 @@ By default in bearer client read and open timeouts are set to 5 seconds. Bearer 
 ```ruby
 Bearer::Configuration.setup do |config|
   # increase the request timeout to 10 seconds, and reduce the open connection timeout to 1 second
-  config.http_client_params = { read_timeout: 10, open_timeout: 1 } 
+  config.http_client_settings = { read_timeout: 10, open_timeout: 1 }
 end
+
+# it is also possible to set the read_timeout and other Net::HTTP client settings per integration
+
+github = Bearer.integration("your integration id", { read_timeout: 10 })
+
+puts JSON.parse(github.get("/repositories").body) # This request will timeout after 10 seconds
 ```
 
 ## Development

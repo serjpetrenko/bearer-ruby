@@ -2,152 +2,122 @@
 
 require "net/http"
 require "json"
-require "forwardable"
 
 require_relative "./errors"
 require_relative "./version"
 
 class Bearer
   class Integration
-    FUNCTIONS_PATH = "api/v4/functions/backend"
-    PROXY_FUNCTION_NAME = "bearer-proxy"
-    extend Forwardable
-
+    # @param integration_id [String] integration id
+    # @param host [String] "https://proxy.bearer.sh" | "https://proxy.staging.bearer.sh"
+    # @param http_client_settings [Hash<String,String>] http client settings see Net::HTTP#start
+    # @param auth_id [String] the auth id used to connect
+    # @param setup_id [String] the setup id used to store the credentials
+    # @param @deprecated read_timeout [String] use http_client_settings instead
     def initialize(
       integration_id:,
-      integration_host:,
+      host:,
       secret_key:,
+      http_client_settings: {},
       read_timeout: nil,
-      setup_id: nil,
-      auth_id: nil
+      auth_id: nil,
+      setup_id: nil
     )
       @integration_id = integration_id
-      @integration_host = integration_host
+      @host = host
       @secret_key = secret_key
-      @setup_id = setup_id
       @auth_id = auth_id
       @read_timeout = read_timeout
+      @http_client_settings = http_client_settings
+      @setup_id = setup_id
     end
 
-    # Public: Invoke an integration function
-    #
-    # function_name    - function to invoke
-    # body             - data to pass in the body of the request
-    # query            - parameters to pass in the query string of the request
-    #
-    # Returns the response from the function
-    def invoke(function_name, body: nil, query: nil)
-      url = "#{@integration_host}/#{FUNCTIONS_PATH}/#{@integration_id}/#{function_name}"
-      headers = {
-        "Content-Type" => "application/json",
-        "Authorization": @secret_key,
-        "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})"
-      }
-
-      response = make_request(method: "POST", url: url, query: query, body: body, headers: headers)
-
-      JSON.parse(response.body).tap do |response_data|
-        raise Errors::FunctionError, response_data["error"] if response_data["error"]
-      end
+    # Returns a new integration client instance that will use the given auth id for requests
+    # @param auth_id [String] the auth id used to connect
+    # @return [Bearer::Integration]
+    def auth(auth_id)
+      self.class.new(
+        integration_id: @integration_id,
+        host: @host,
+        secret_key: @secret_key,
+        auth_id: auth_id
+      )
     end
 
-    # Public: Returns a new integration client instance that will use the given setup id for requests
-    #
-    # setup_id - the setup id from the dashboard
+    # Returns a new integration client instance that will use the given setup id for requests
+    # @param setup_id [String] uuid setup id used to store credentials
+    # @return [Bearer::Integration]
     def setup(setup_id)
       self.class.new(
         integration_id: @integration_id,
-        integration_host: @integration_host,
+        host: @host,
         secret_key: @secret_key,
         setup_id: setup_id,
         auth_id: @auth_id
       )
     end
 
-    # Public: Returns a new integration client instance that will use the given auth id for requests
-    #
-    # auth_id - the auth id used to connect
-    def auth(auth_id)
-      self.class.new(
-        integration_id: @integration_id,
-        integration_host: @integration_host,
-        secret_key: @secret_key,
-        setup_id: @setup_id,
-        auth_id: auth_id
-      )
-    end
-
-    # Public: An alias for `#auth`
+    # An alias for `#auth`
+    # @see {#auth}
     def authenticate(auth_id)
       auth(auth_id)
     end
 
-    # Public: Makes a GET request to the API configured for this integration and returns the response
-    #
-    # See `self.request` for a description of the parameters
+    # Makes a HEAD request to the API configured for this integration and returns the response
+    # @param (see #request)
     def get(endpoint, headers: nil, body: nil, query: nil)
       request("GET", endpoint, headers: headers, body: body, query: query)
     end
 
-    # Public: Makes a GET request to the API configured for this integration and returns the response
-    #
-    # See `self.request` for a description of the parameters
+    # Makes a HEAD request to the API configured for this integration and returns the response
+    # @param (see #request)
     def head(endpoint, headers: nil, body: nil, query: nil)
       request("HEAD", endpoint, headers: headers, body: body, query: query)
     end
 
-    # Public: Makes a GET request to the API configured for this integration and returns the response
-    #
-    # See `self.request` for a description of the parameters
+    # Makes a POST request to the API configured for this integration and returns the response
+    # @param (see #request)
     def post(endpoint, headers: nil, body: nil, query: nil)
       request("POST", endpoint, headers: headers, body: body, query: query)
     end
 
-    # Public: Makes a GET request to the API configured for this integration and returns the response
-    #
-    # See `self.request` for a description of the parameters
+    # Makes a PUT request to the API configured for this integration and returns the response
+    # @param (see #request)
     def put(endpoint, headers: nil, body: nil, query: nil)
       request("PUT", endpoint, headers: headers, body: body, query: query)
     end
 
-    # Public: Makes a GET request to the API configured for this integration and returns the response
-    #
-    # See `self.request` for a description of the parameters
+    # Makes a GET request to the API configured for this integration and returns the response
+    # @param (see #request)
     def patch(endpoint, headers: nil, body: nil, query: nil)
       request("PATCH", endpoint, headers: headers, body: body, query: query)
     end
 
-    # Public: Makes a GET request to the API configured for this integration and returns the response
-    #
-    # See `self.request` for a description of the parameters
+    # Makes a DELETE request to the API configured for this integration and returns the response
+    # @param (see #request)
     def delete(endpoint, headers: nil, body: nil, query: nil)
       request("DELETE", endpoint, headers: headers, body: body, query: query)
     end
 
-    # Public: Makes a request to the API configured for this integration and returns the response
-
-    # method   - GET/HEAD/POST/PUT/PATCH/DELETE
-    # endpoint - the URL relative to the configured API's base URL
-    # headers  - any headers to send to the API
-    # body     - any request body data to send
-    # query    - parameters to add to the URL's query string
+    # Makes a request to the API configured for this integration and returns the response
+    # @param method [String] GET/HEAD/POST/PUT/PATCH/DELETE
+    # @param endpoint [String] the URL relative to the configured API's base URL
+    # @param headers [Hash<String, String>] any headers to send to the API
+    # @param body [Hash] any request body data to send
+    # @param query [Hash<String, String>] parameters to add to the URL's query string
     def request(method, endpoint, headers: nil, body: nil, query: nil)
       pre_headers = {
         "Authorization": @secret_key,
         "User-Agent": "Bearer-Ruby (#{Bearer::VERSION})",
         "Bearer-Auth-Id": @auth_id,
         "Bearer-Setup-Id": @setup_id,
-        # TODO: Remove this when integration service content type support is fixed
         "Content-Type": "application/json"
       }
 
-      headers&.each do |key, value|
-        pre_headers["Bearer-Proxy-#{key}"] = value
-      end
+      request_headers = pre_headers.merge(headers || {}).reject { |_k, v| v.nil? }
 
-      request_headers = pre_headers.reject { |_k, v| v.nil? }
       endpoint = endpoint.sub(%r{\A/}, "")
-      url = "#{@integration_host}/#{FUNCTIONS_PATH}/#{@integration_id}/#{PROXY_FUNCTION_NAME}/#{endpoint}"
+      url = "#{@host}/#{@integration_id}/#{endpoint}"
 
       make_request(method: method, url: url, query: query, body: body, headers: request_headers)
     end
@@ -155,8 +125,8 @@ class Bearer
     private
 
     # @return [Hash]
-    def http_client_params
-      Bearer::Configuration.http_client_params
+    def http_client_settings
+      Bearer::Configuration.http_client_settings.merge(@http_client_settings)
     end
 
     def make_request(method:, url:, query:, body:, headers:)
@@ -167,7 +137,7 @@ class Bearer
         parsed_url.hostname,
         parsed_url.port,
         use_ssl: parsed_url.scheme == "https",
-        **http_client_params
+        **http_client_settings
       ) do |http|
         http.send_request(method, parsed_url, body ? body.to_json : nil, headers)
       end

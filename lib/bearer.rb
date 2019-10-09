@@ -3,31 +3,34 @@
 require_relative "./bearer/configuration"
 require_relative "./bearer/integration"
 
+# Ruby bindings for Bearer
 class Bearer
-  # Public: Create an instance of the Bearer client
-  #
-  # api_key - developer API Key from the Dashboard. Defaults to the value from the `Bearer::Configuration` object
-  def initialize(secret_key = Bearer::Configuration.secret_key, integration_host: nil)
+  # Create an instance of the Bearer client
+  # @param secret_key [String] developer secret Key from https://app.bearer.sh/settings.
+  # @param host [String] used internally
+  def initialize(secret_key = Bearer::Configuration.secret_key, host: Bearer::Configuration.host)
     @secret_key = secret_key
-    @integration_host = integration_host || Bearer::Configuration.integration_host
+    @host = host
   end
 
-  # Public: Return an integration client
+  # Return an integration client
   #
-  # integration_id - the integration's unique identifier from the Dashboard
-  def integration(integration_id)
-    Integration.new(integration_id: integration_id, integration_host: @integration_host, secret_key: @secret_key)
+  # @param http_client_settings [Hash<String,String>] sent as keyword arguments to Net::HTTP.start method
+  # @param integration_id [String] bearer api id
+  # @return [Bearer::Integration]
+  def integration(integration_id, http_client_settings: {})
+    Integration.new(
+      integration_id: integration_id,
+      host: @host,
+      secret_key: @secret_key,
+      http_client_settings: http_client_settings
+    )
   end
 
-  class << self
-    def call(integration_buid, integration_name, params: {}, body: {})
-      integration(integration_buid).invoke(integration_name, body: body, query: params)
-    end
-
-    alias invoke call
-
-    def integration(integration_id)
-      new.integration(integration_id)
-    end
+  # @see {Bearer#integration}
+  # @param (see #integration)
+  # @return [Bearer::Integration]
+  def self.integration(integration_id, http_client_settings: {})
+    new.integration(integration_id, http_client_settings: http_client_settings)
   end
 end

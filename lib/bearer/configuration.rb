@@ -5,36 +5,58 @@ require "singleton"
 require_relative "./errors"
 
 class Bearer
+  # stores global Bearer configuration options
+  # @see https://app.bearer.sh/settings
+  # @attr_writer [String] secret_key secret key from https://app.bearer.sh/settings
+  # @attr_writer [String] publishable_key publishable key from https://app.bearer.sh/settings
+  # @attr_writer [String] encryption_key encryption key from https://app.bearer.sh/settings
+  # @attr_writer [Hash] http_client_settings options passed as a parameters to Net::HTTP#start
+  # @attr_writer [String] host mainly used internally
   class Configuration
     include Singleton
 
-    PRODUCTION_INTEGRATION_HOST = "https://int.bearer.sh"
+    PRODUCTION_INTEGRATION_HOST = "https://proxy.bearer.sh"
 
     FIELDS = %i[
       secret_key
       publishable_key
       encryption_key
-      integration_host
-      http_client_params
+      host
+      http_client_settings
     ].freeze
 
     DEPRECATED_FIELDS = %i[
       api_key
       client_id
       secret
+      integration_host
+      http_client_params
     ].freeze
 
     DEFAULT_READ_TIMEOUT = 5
     DEFAULT_OPEN_TIMEOUT = 5
 
-    # @return [Hash]
+    # @return [String]
     def integration_host
-      @integration_host ||= PRODUCTION_INTEGRATION_HOST
+      deprecate("integration_host", "host")
+      host
+    end
+
+    # @return [String]
+    def host
+      @host ||= PRODUCTION_INTEGRATION_HOST
     end
 
     # @return [Hash]
+    def http_client_settings
+      default_http_client_settings.merge(@http_client_settings || {})
+    end
+
+    # @deprecated use {#http_client_settings} instead
+    # @return [Hash<String,String>]
     def http_client_params
-      default_http_client_params.merge(@http_client_params || {})
+      deprecate("http_client_params", "http_client_settings")
+      http_client_settings
     end
 
     # @return [String]
@@ -52,18 +74,21 @@ class Bearer
       raise_if_missing(:encryption_key)
     end
 
+    # @deprecated Use {#secret_key} instead.
     # @return [String]
     def api_key
       deprecate("api_key", "secret_key")
       secret_key
     end
 
+    # @deprecated Use {#publishable_key} instead.
     # @return [String]
     def client_id
       deprecate("client_id", "publishable_key")
       publishable_key
     end
 
+    # @deprecated Use {#encryption_key} instead.
     # @return [String]
     def secret
       deprecate("secret", "encryption_key")
@@ -72,19 +97,39 @@ class Bearer
 
     attr_writer(*FIELDS)
 
+    # @deprecated Use {#secret_key=} instead.
+    # @return [void]
     def api_key=(value)
       deprecate("api_key=", "secret_key=")
       @secret_key = value
     end
 
+    # @deprecated Use {#publishable_key=} instead.
+    # @return [void]
     def client_id=(value)
       deprecate("client_id=", "publishable_key=")
       @publishable_key = value
     end
 
+    # @deprecated Use {#encryption_key=} instead.
+    # @return [void]
     def secret=(value)
       deprecate("secret=", "encryption_key=")
       @encryption_key = value
+    end
+
+    # @deprecated Use {#host=} instead.
+    # @return [void]
+    def integration_host=(value)
+      deprecate("integration_host=", "host=")
+      @host = value
+    end
+
+    # @deprecated Use {#http_client_settings=} instead.
+    # @return [void]
+    def http_client_params=(value)
+      deprecate("http_client_params=", "http_client_settings=")
+      @http_client_settings = value
     end
 
     class << self
@@ -138,7 +183,7 @@ class Bearer
     end
 
     # @return [Hash]
-    def default_http_client_params
+    def default_http_client_settings
       {
         read_timeout: read_timeout,
         open_timeout: open_timeout
