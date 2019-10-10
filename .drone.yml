@@ -1,0 +1,40 @@
+kind: pipeline
+name: Bearer Ruby - Publish Gem
+
+steps:
+  - name: Install
+    image: ruby:2.6.1
+    commands:
+      - gem build bearer.gemspec
+  - name: Push
+    image: ruby:2.6.1
+    commands:
+      - /bin/bash bin/setup-credentials
+      - gem push *.gem
+    environment:
+      RUBYGEMS_AUTH_TOKEN:
+        from_secret: RUBYGEMS_AUTH_TOKEN
+trigger:
+  event:
+    - tag
+  ref:
+    - refs/tags/release-v*
+
+---
+kind: pipeline
+name: Bearer Ruby - Build and Test
+
+clone:
+  depth: 50
+
+steps:
+  - name: install dependencies & test
+    image: ruby:2.6.1
+    commands:
+      - gem install bundler
+      - bundle install
+      - bundle exec rspec spec
+    when:
+      event:
+        - pull_request
+        - push
