@@ -45,4 +45,15 @@ RSpec.describe Bearer do
   it "does NOT raise an error when a missing key is optional" do
     expect { Bearer::Configuration.integration_host }.not_to raise_error
   end
+
+  it "allows to setup the log_level (defaults to Logger::INFO)", :aggregate_failures do
+    expect(Bearer::Configuration.log_level).to eq :info
+    Bearer::Configuration.setup do |config|
+      config.log_level = :warn
+    end
+    expect(Bearer::Configuration.log_level).to eq :warn
+    Bearer::Configuration.log_level = :error
+    expect(Bearer::Configuration.log_level).to eq :error
+
+  end
 end

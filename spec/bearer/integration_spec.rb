@@ -29,6 +29,7 @@ RSpec.describe Bearer::Integration do
 
   let(:success_payload) { { "data" => "It Works!!" } }
   let(:success_response) { success_payload.to_json }
+  let(:success_headers) { { "Bearer-Request-Id" => "bearer-request-id" } }
   let(:body_payload) { { body: "data" } }
   let(:body) { body_payload.to_json }
 
@@ -50,10 +51,12 @@ RSpec.describe Bearer::Integration do
     let(:headers) { { "test" => "header" } }
 
     describe "#get" do
-      it "makes a request to the proxy function" do
+      it "makes a request to the proxy function", :aggregate_failures do
         stub_request(:get, proxy_url)
           .with(headers: sent_headers, query: query)
-          .to_return(status: 200, body: success_response)
+          .to_return(status: 200, body: success_response, headers: success_headers)
+
+        expect(Bearer.logger).to receive(:info).with("Bearer")
 
         response = client.get("/test", headers: headers, query: query)
 
@@ -138,7 +141,7 @@ RSpec.describe Bearer::Integration do
       let(:setup_id) { "test-setup-id" }
       let(:setup_sent_headers) { sent_headers.merge("Bearer-Setup-Id" => setup_id) }
 
-      it "sends the setup id in the Bearer-Auth-Id header" do
+      it "sends the setup id in the Bearer-Setup-Id header" do
         stub_request(:get, proxy_url).with(headers: setup_sent_headers).to_return(status: 200)
 
         response = client.setup(setup_id).get("/test", headers: headers)

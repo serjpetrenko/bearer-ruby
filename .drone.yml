@@ -3,11 +3,11 @@ name: Bearer Ruby - Publish Gem
 
 steps:
   - name: Install
-    image: ruby:2.6.1
+    image: ruby:2.6.5
     commands:
       - gem build bearer.gemspec
   - name: Push
-    image: ruby:2.6.1
+    image: ruby:2.6.5
     commands:
       - /bin/bash bin/setup-credentials
       - gem push *.gem
@@ -29,7 +29,7 @@ clone:
 
 steps:
   - name: install dependencies & test
-    image: ruby:2.6.1
+    image: ruby:2.6.5
     commands:
       - gem install bundler
       - bundle install

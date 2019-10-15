@@ -2,6 +2,7 @@
 
 require_relative "./bearer/configuration"
 require_relative "./bearer/integration"
+require "logger"
 
 # Ruby bindings for Bearer
 class Bearer
@@ -32,5 +33,11 @@ class Bearer
   # @return [Bearer::Integration]
   def self.integration(integration_id, http_client_settings: {})
     new.integration(integration_id, http_client_settings: http_client_settings)
+  end
+
+  # @see {Logger}
+  # @return [Logger]
+  def self.logger
+    @logger ||= Logger.new(STDOUT, level: Bearer::Configuration.log_level)
   end
 end

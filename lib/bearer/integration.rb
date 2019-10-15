@@ -133,6 +133,12 @@ class Bearer
       parsed_url = URI(url)
       parsed_url.query = URI.encode_www_form(query) if query
 
+      debug_request(parsed_url: parsed_url,
+                    http_client_settings: http_client_settings,
+                    method: method,
+                    body: body,
+                    headers: headers)
+
       Net::HTTP.start(
         parsed_url.hostname,
         parsed_url.port,
@@ -140,6 +146,35 @@ class Bearer
         **http_client_settings
       ) do |http|
         http.send_request(method, parsed_url, body ? body.to_json : nil, headers)
+      end.tap(&info_response)
+    end
+
+    # @return [void]
+    def debug_request(parsed_url:, http_client_settings:, method:, body:, headers:)
+      Bearer.logger.debug("Bearer") do
+        <<-DEBUG.gsub(/^\s+/, "")
+          sending request
+            hostname: #{parsed_url.hostname}
+            port: #{parsed_url.port}
+            scheme: #{parsed_url.scheme}
+            method: #{method}
+            http_client_settings: #{http_client_settings.to_json}
+            body: #{body ? body.to_json : ''}
+            headers: #{headers ? headers.to_json : ''}
+        DEBUG
+      end
+    end
+
+    # @return [void]
+    def info_response
+      lambda do |response|
+        return unless response
+
+        Bearer.logger.info("Bearer") do
+          <<-INFO.gsub(/^\s+/, "")
+            response requestId: #{response.header['bearer-request-id']}
+          INFO
+        end
       end
     end
   end

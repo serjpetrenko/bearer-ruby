@@ -23,6 +23,7 @@ class Bearer
       encryption_key
       host
       http_client_settings
+      log_level
     ].freeze
 
     DEPRECATED_FIELDS = %i[
@@ -40,6 +41,11 @@ class Bearer
     def integration_host
       deprecate("integration_host", "host")
       host
+    end
+
+    # @return [Integer]
+    def log_level
+      @log_level ||= :info
     end
 
     # @return [String]
@@ -132,6 +138,11 @@ class Bearer
       @http_client_settings = value
     end
 
+    def log_level=(severity)
+      Bearer.logger.level = severity
+      @log_level = severity
+    end
+
     class << self
       ALL_METHODS = [*FIELDS, *DEPRECATED_FIELDS].freeze
       EXISTING_METHODS = ALL_METHODS.flat_map { |field| [field, "#{field}=".to_sym] }
@@ -147,7 +158,8 @@ class Bearer
 
       def reset
         FIELDS.each do |field|
-          instance.public_send("#{field}=", nil)
+          value = field == :log_level ? :info : nil
+          instance.public_send("#{field}=", value)
         end
       end
 
@@ -157,6 +169,7 @@ class Bearer
     end
 
     private
+
 
     def raise_if_missing(field)
       value = instance_variable_get(:"@#{field}")
