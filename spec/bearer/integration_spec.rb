@@ -27,7 +27,7 @@ RSpec.describe Bearer::Integration do
     }
   end
 
-  let(:success_payload) { { "data" => "It Works!!" } }
+  let(:success_payload) { { data: "It Works!!" } }
   let(:success_response) { success_payload.to_json }
   let(:success_headers) { { "Bearer-Request-Id" => "bearer-request-id" } }
   let(:body_payload) { { body: "data" } }
@@ -60,7 +60,7 @@ RSpec.describe Bearer::Integration do
 
         response = client.get("/test", headers: headers, query: query)
 
-        expect(JSON.parse(response.body)).to eq(success_payload)
+        expect(response.data).to eq(success_payload)
       end
     end
 
@@ -68,11 +68,11 @@ RSpec.describe Bearer::Integration do
       it "makes a request to the proxy function" do
         stub_request(:head, proxy_url)
           .with(headers: sent_headers.reject { |k| k == "Accept-Encoding" }, query: query)
-          .to_return(status: 200)
+          .to_return(status: 200, body: "{}")
 
         response = client.head("/test", headers: headers, query: query)
 
-        expect(response.code).to eq("200")
+        expect(response.http_status).to eq(200)
       end
     end
 
@@ -84,7 +84,7 @@ RSpec.describe Bearer::Integration do
 
         response = client.post("/test", headers: headers, query: query, body: body_payload)
 
-        expect(JSON.parse(response.body)).to eq(success_payload)
+        expect(response.data).to eq(success_payload)
       end
     end
 
@@ -96,7 +96,7 @@ RSpec.describe Bearer::Integration do
 
         response = client.put("/test", headers: headers, query: query, body: body_payload)
 
-        expect(JSON.parse(response.body)).to eq(success_payload)
+        expect(response.data).to eq(success_payload)
       end
     end
 
@@ -108,7 +108,7 @@ RSpec.describe Bearer::Integration do
 
         response = client.patch("/test", headers: headers, query: query, body: body_payload)
 
-        expect(JSON.parse(response.body)).to eq(success_payload)
+        expect(response.data).to eq(success_payload)
       end
     end
 
@@ -120,7 +120,7 @@ RSpec.describe Bearer::Integration do
 
         response = client.delete("/test", headers: headers, query: query, body: body_payload)
 
-        expect(JSON.parse(response.body)).to eq(success_payload)
+        expect(response.data).to eq(success_payload)
       end
     end
 
@@ -129,11 +129,11 @@ RSpec.describe Bearer::Integration do
       let(:auth_sent_headers) { sent_headers.merge("Bearer-Auth-Id" => auth_id) }
 
       it "sends the auth id in the Bearer-Auth-Id header" do
-        stub_request(:get, proxy_url).with(headers: auth_sent_headers).to_return(status: 200)
+        stub_request(:get, proxy_url).with(headers: auth_sent_headers).to_return(status: 200, body: "{}")
 
         response = client.auth(auth_id).get("/test", headers: headers)
 
-        expect(response.code).to eq("200")
+        expect(response.http_status).to eq(200)
       end
     end
 
@@ -142,11 +142,11 @@ RSpec.describe Bearer::Integration do
       let(:setup_sent_headers) { sent_headers.merge("Bearer-Setup-Id" => setup_id) }
 
       it "sends the setup id in the Bearer-Setup-Id header" do
-        stub_request(:get, proxy_url).with(headers: setup_sent_headers).to_return(status: 200)
+        stub_request(:get, proxy_url).with(headers: setup_sent_headers).to_return(status: 200, body: "{}")
 
         response = client.setup(setup_id).get("/test", headers: headers)
 
-        expect(response.code).to eq("200")
+        expect(response.http_status).to eq(200)
       end
     end
   end
@@ -161,6 +161,8 @@ RSpec.describe Bearer::Integration do
       )
     end
 
+    let(:mock_response) { double(body: "{}", header: {}, code: 1, to_hash: {}, :"[]" => nil) }
+
     before do
       stub_request(:get, "https://int.example.com/test-integration-id/test")
         .with(
@@ -173,10 +175,10 @@ RSpec.describe Bearer::Integration do
             "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})"
           }
         )
-        .to_return(status: 200, body: "", headers: {})
+        .to_return(status: 200, body: "{}", headers: {})
     end
     it "respects http client integration settings" do
-      expect(Net::HTTP).to receive(:start).with("int.example.com", 443, open_timeout: 5, read_timeout: 1, use_ssl: true)
+      expect(Net::HTTP).to receive(:start).with("int.example.com", 443, open_timeout: 5, read_timeout: 1, use_ssl: true) { mock_response }
       client.get("/test")
     end
   end

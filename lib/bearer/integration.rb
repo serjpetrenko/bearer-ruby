@@ -139,7 +139,7 @@ class Bearer
                     body: body,
                     headers: headers)
 
-      Net::HTTP.start(
+      response = Net::HTTP.start(
         parsed_url.hostname,
         parsed_url.port,
         use_ssl: parsed_url.scheme == "https",
@@ -147,6 +147,8 @@ class Bearer
       ) do |http|
         http.send_request(method, parsed_url, body ? body.to_json : nil, headers)
       end.tap(&info_response)
+
+      Bearer::Response.from_net_http(response)
     end
 
     # @return [void]

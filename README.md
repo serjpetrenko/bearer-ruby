@@ -40,7 +40,7 @@ github = (
     .auth("your auth id") # Create an auth id for your integration via the dashboard
 )
 
-puts JSON.parse(github.get("/repositories").body)
+puts github.get("/repositories").data
 ```
 
 We use `Net::HTTP` internally and we
@@ -51,10 +51,10 @@ More advanced examples:
 
 ```ruby
 # With query parameters
-puts JSON.parse(github.get("/repositories", query: { since: 364 }).body)
+puts github.get("/repositories", query: { since: 364 }).data
 
 # With body data
-puts JSON.parse(github.post("/user/repos", body: { name: "Just setting up my Bearer.sh" }).body)
+puts github.post("/user/repos", body: { name: "Just setting up my Bearer.sh" }).data
 ```
 
 ### Global configuration
@@ -72,7 +72,7 @@ You can now use the client without having to pass the Secret Key each time:
 ```ruby
 github = Bearer.integration("your integration id").auth("your auth id")
 
-puts JSON.parse(github.get("/repositories").body)
+puts github.get("/repositories").data
 ```
 ### Setting the request timeout
 
@@ -88,12 +88,12 @@ end
 
 github = Bearer.integration("your integration id", { read_timeout: 10 })
 
-puts JSON.parse(github.get("/repositories").body) # This request will timeout after 10 seconds
+puts github.get("/repositories").data # This request will timeout after 10 seconds
 ```
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment. Also make sure you have `overcommit` installed and initialized in the repo [check overcommit repo](https://github.com/sds/overcommit) for further reference.
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 

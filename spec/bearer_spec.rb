@@ -7,6 +7,7 @@ RSpec.describe Bearer do
     expect(Bearer::VERSION).not_to be nil
   end
 
+  let(:mock_response) { double(body: "{}", header: {}, code: 1, to_hash: {}, :"[]" => nil) }
   describe "#integration" do
     before do
       stub_request(:get, "http://some.host.com/api/v4/functions/backend/github/bearer-proxy/user/repos")
@@ -31,7 +32,7 @@ RSpec.describe Bearer do
       bearer = Bearer.new
       github = bearer.integration("github")
       expect(github).to be_an_instance_of(Bearer::Integration)
-      expect(Net::HTTP).to receive(:start).with("some.host.com", 80, {open_timeout: 10, read_timeout: 10, use_ssl: false})
+      expect(Net::HTTP).to receive(:start).with("some.host.com", 80, {open_timeout: 10, read_timeout: 10, use_ssl: false}) { mock_response }
       github.get("/user/repos")
     end
   end

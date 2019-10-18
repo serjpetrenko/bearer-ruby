@@ -170,7 +170,6 @@ class Bearer
 
     private
 
-
     def raise_if_missing(field)
       value = instance_variable_get(:"@#{field}")
 

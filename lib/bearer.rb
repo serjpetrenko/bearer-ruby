@@ -2,6 +2,7 @@
 
 require_relative "./bearer/configuration"
 require_relative "./bearer/integration"
+require_relative "./bearer/response"
 require "logger"
 
 # Ruby bindings for Bearer
