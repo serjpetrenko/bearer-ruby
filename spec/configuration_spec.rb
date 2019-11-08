@@ -54,6 +54,24 @@ RSpec.describe Bearer do
     expect(Bearer::Configuration.log_level).to eq :warn
     Bearer::Configuration.log_level = :error
     expect(Bearer::Configuration.log_level).to eq :error
+  end
 
+  context "retrying request" do
+    it "has reasonable defaults for retry mechanism", :aggregate_failures do
+      expect(Bearer::Configuration.max_network_retries).to eq 0
+      expect(Bearer::Configuration.max_network_retry_delay).to eq 2
+      expect(Bearer::Configuration.initial_network_retry_delay).to eq 0.5
+    end
+
+    it "allows to update configuration of retry mechanism", :aggregate_failures do
+      Bearer::Configuration.setup do |config|
+        config.max_network_retry_delay = 10
+        config.max_network_retries = 10
+        config.initial_network_retry_delay = 10
+      end
+      expect(Bearer::Configuration.max_network_retries).to eq 10
+      expect(Bearer::Configuration.max_network_retry_delay).to eq 10
+      expect(Bearer::Configuration.initial_network_retry_delay).to eq 10
+    end
   end
 end

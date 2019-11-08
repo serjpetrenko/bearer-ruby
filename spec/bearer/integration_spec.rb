@@ -44,7 +44,7 @@ RSpec.describe Bearer::Integration do
         "Accept-Encoding" => "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
         "Authorization" => secret_key,
         "Host" => "int.example.com",
-        "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})",
+        "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})"
       }
     end
 
@@ -149,6 +149,38 @@ RSpec.describe Bearer::Integration do
         expect(response.http_status).to eq(200)
       end
     end
+
+    describe "retrying requests" do
+      around(:each) do |example|
+        old_max_network_retries = Bearer::Configuration.max_network_retries
+        Bearer::Configuration.max_network_retries = 2
+        example.run
+        Bearer::Configuration.max_network_retries = old_max_network_retries
+      end
+      it "retries the request and raises (by default a single retry is made)", :aggregate_failures do
+        stub_request(:get, proxy_url)
+          .with(headers: sent_headers, query: query)
+          .to_timeout
+
+
+        # 3 times is first attempt + 2 retries
+        expect(Net::HTTP).to receive(:start).exactly(3).times.and_call_original
+        # 4 warnings -> 3 warnings informing about an error + 4th warning about num_retries exceeded
+        expect(Bearer.logger).to receive(:warn).exactly(4).times.with("Bearer")
+        expect { client.get("/test", headers: headers, query: query) }.to raise_error(Net::OpenTimeout)
+      end
+
+      it "retries the request and succeeds" do
+        stub_request(:get, proxy_url)
+          .with(headers: sent_headers, query: query)
+          .to_timeout.then
+          .to_return(status: 200, body: success_response)
+
+        response = client.get("/test", headers: headers, query: query)
+
+        expect(response.http_body).to eq(success_response)
+      end
+    end
   end
 
   describe "setting http client per integration" do
@@ -161,7 +193,7 @@ RSpec.describe Bearer::Integration do
       )
     end
 
-    let(:mock_response) { double(body: "{}", header: {}, code: 1, to_hash: {}, :"[]" => nil) }
+    let(:mock_response) { double(body: "{}", header: {}, code: 1, to_hash: {}, "[]": nil) }
 
     before do
       stub_request(:get, "https://int.example.com/test-integration-id/test")
@@ -180,6 +212,52 @@ RSpec.describe Bearer::Integration do
     it "respects http client integration settings" do
       expect(Net::HTTP).to receive(:start).with("int.example.com", 443, open_timeout: 5, read_timeout: 1, use_ssl: true) { mock_response }
       client.get("/test")
+    end
+  end
+
+  describe ".sleep_time" do
+    subject(:sleep_time) do
+      lambda do |n|
+        Bearer::Integration.sleep_time(n)
+      end
+    end
+
+    it "provides reasonable sleep_time defaults", :aggregate_failures do
+      expect(sleep_time[0]).to eq 0.5
+      expect(sleep_time[1]).to eq 0.5
+    end
+  end
+
+  describe ".should_retry?" do
+    let (:max_network_retries) { 3 }
+    before do
+      Bearer::Configuration.max_network_retries = max_network_retries
+    end
+    subject(:should_retry?) do
+      lambda do |error, num_retries|
+        Bearer::Integration.should_retry? error, num_retries: num_retries
+      end
+    end
+
+    it "is false when num_retries > max_network_retries" do
+      expect(should_retry?[StandardError.new, max_network_retries + 1]).to eq false
+    end
+
+    context "when num_retries < max_network_retries" do
+      [
+        Net::OpenTimeout,
+        Net::ReadTimeout,
+        EOFError,
+        Errno::ECONNREFUSED,
+        Errno::ECONNRESET,
+        Errno::EHOSTUNREACH,
+        Errno::ETIMEDOUT,
+        SocketError
+      ].each do |e|
+        it "is true for #{e.name}" do
+          expect(should_retry?[e.new, 0]).to eq true
+        end
+      end
     end
   end
 end

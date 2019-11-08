@@ -122,6 +122,47 @@ class Bearer
       make_request(method: method, url: url, query: query, body: body, headers: request_headers)
     end
 
+    # Checks if an error is a problem that we should retry on. This includes
+    # both socket errors that may represent an intermittent problem and some
+    # special HTTP statuses.
+    # TODO: handle bearer errors like 500 statuses
+    def self.should_retry?(error, num_retries:)
+      return false if num_retries >= Bearer::Configuration.max_network_retries
+
+      case error
+      when Net::OpenTimeout, Net::ReadTimeout
+        # Retry on timeout-related problems (either on open or read).
+        true
+      when EOFError, Errno::ECONNREFUSED, Errno::ECONNRESET,
+            Errno::EHOSTUNREACH, Errno::ETIMEDOUT, SocketError
+        # Destination refused the connection, the connection was reset, or a
+        # variety of other connection failures. This could occur from a single
+        # saturated server, so retry in case it's intermittent.
+        true
+      else
+        false
+      end
+    end
+
+    def self.sleep_time(num_retries)
+      # Apply exponential backoff with initial_network_retry_delay on the
+      # number of num_retries so far as inputs. Do not allow the number to
+      # exceed max_network_retry_delay.
+      sleep_seconds = [
+        Bearer::Configuration.initial_network_retry_delay * (2**(num_retries - 1)),
+        Bearer::Configuration.max_network_retry_delay
+      ].min
+
+      # Apply some jitter by randomizing the value in the range of
+      # (sleep_seconds / 2) to (sleep_seconds).
+      sleep_seconds *= (0.5 * (1 + rand))
+
+      # But never sleep less than the base sleep seconds.
+      sleep_seconds = [Bearer::Configuration.initial_network_retry_delay, sleep_seconds].max
+
+      sleep_seconds
+    end
+
     private
 
     # @return [Hash]
@@ -129,7 +170,9 @@ class Bearer
       Bearer::Configuration.http_client_settings.merge(@http_client_settings)
     end
 
+    # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
     def make_request(method:, url:, query:, body:, headers:)
+      num_retries = 0
       parsed_url = URI(url)
       parsed_url.query = URI.encode_www_form(query) if query
 
@@ -138,18 +181,37 @@ class Bearer
                     method: method,
                     body: body,
                     headers: headers)
+      begin
+        response = Net::HTTP.start(
+          parsed_url.hostname,
+          parsed_url.port,
+          use_ssl: parsed_url.scheme == "https",
+          **http_client_settings
+        ) do |http|
+          http.send_request(method, parsed_url, body ? body.to_json : nil, headers)
+        end.tap(&info_response)
 
-      response = Net::HTTP.start(
-        parsed_url.hostname,
-        parsed_url.port,
-        use_ssl: parsed_url.scheme == "https",
-        **http_client_settings
-      ) do |http|
-        http.send_request(method, parsed_url, body ? body.to_json : nil, headers)
-      end.tap(&info_response)
-
-      Bearer::Response.from_net_http(response)
+        Bearer::Response.from_net_http(response)
+      rescue StandardError => e
+        Bearer.logger.warn("Bearer") do
+          <<-WARN.gsub(/^\s+/, "")
+               There was an error while trying to make a request to bearer.
+               #{e.class.name}: #{e.message}
+          WARN
+        end
+        if self.class.should_retry?(e, num_retries: num_retries)
+          num_retries += 1
+          Bearer.logger.info("Bearer") { "retrying request" }
+          retry
+        else
+          Bearer.logger.warn("Bearer") do
+            "Failed to perform to bearer request number of retries exceeded"
+          end
+          raise e
+        end
+      end
     end
+    # rubocop:enable Metrics/MethodLength,Metrics/AbcSize
 
     # @return [void]
     def debug_request(parsed_url:, http_client_settings:, method:, body:, headers:)

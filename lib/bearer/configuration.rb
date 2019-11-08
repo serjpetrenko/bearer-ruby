@@ -24,6 +24,9 @@ class Bearer
       host
       http_client_settings
       log_level
+      max_network_retries
+      max_network_retry_delay
+      initial_network_retry_delay
     ].freeze
 
     DEPRECATED_FIELDS = %i[
@@ -36,6 +39,10 @@ class Bearer
 
     DEFAULT_READ_TIMEOUT = 5
     DEFAULT_OPEN_TIMEOUT = 5
+
+    DEFAULT_MAX_NETWORK_RETRIES = 0
+    DEFAULT_MAX_NETWORK_RETRY_DELAY = 2
+    DEFAULT_INITIAL_NETWORK_RETRY_DELAY = 0.5
 
     # @return [String]
     def integration_host
@@ -51,6 +58,21 @@ class Bearer
     # @return [String]
     def host
       @host ||= PRODUCTION_INTEGRATION_HOST
+    end
+
+    # @return [Integer]
+    def max_network_retries
+      @max_network_retries ||= DEFAULT_MAX_NETWORK_RETRIES
+    end
+
+    # @return [Float]
+    def max_network_retry_delay
+      @max_network_retry_delay ||= DEFAULT_MAX_NETWORK_RETRY_DELAY
+    end
+
+    # @return [Float]
+    def initial_network_retry_delay
+      @initial_network_retry_delay ||= DEFAULT_INITIAL_NETWORK_RETRY_DELAY
     end
 
     # @return [Hash]
