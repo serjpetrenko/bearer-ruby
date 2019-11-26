@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "./bearer/auth_details"
 require_relative "./bearer/configuration"
 require_relative "./bearer/integration"
 require_relative "./bearer/response"
@@ -9,9 +10,15 @@ require "logger"
 class Bearer
   # Create an instance of the Bearer client
   # @param secret_key [String] developer secret Key from https://app.bearer.sh/settings.
+  # @param auth_host [String] used internally
   # @param host [String] used internally
-  def initialize(secret_key = Bearer::Configuration.secret_key, host: Bearer::Configuration.host)
+  def initialize(
+    secret_key = Bearer::Configuration.secret_key,
+    auth_host: Bearer::Configuration.auth_host,
+    host: Bearer::Configuration.host
+  )
     @secret_key = secret_key
+    @auth_host = auth_host
     @host = host
   end
 
@@ -23,6 +30,7 @@ class Bearer
   def integration(integration_id, http_client_settings: {})
     Integration.new(
       integration_id: integration_id,
+      auth_host: @auth_host,
       host: @host,
       secret_key: @secret_key,
       http_client_settings: http_client_settings

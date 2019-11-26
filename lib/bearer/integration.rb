@@ -16,6 +16,7 @@ class Bearer
     # @param @deprecated read_timeout [String] use http_client_settings instead
     def initialize(
       integration_id:,
+      auth_host:,
       host:,
       secret_key:,
       http_client_settings: {},
@@ -24,6 +25,7 @@ class Bearer
       setup_id: nil
     )
       @integration_id = integration_id
+      @auth_host = auth_host
       @host = host
       @secret_key = secret_key
       @auth_id = auth_id
@@ -38,6 +40,7 @@ class Bearer
     def auth(auth_id)
       self.class.new(
         integration_id: @integration_id,
+        auth_host: @auth_host,
         host: @host,
         secret_key: @secret_key,
         auth_id: auth_id
@@ -50,6 +53,7 @@ class Bearer
     def setup(setup_id)
       self.class.new(
         integration_id: @integration_id,
+        auth_host: @auth_host,
         host: @host,
         secret_key: @secret_key,
         setup_id: setup_id,
@@ -61,6 +65,20 @@ class Bearer
     # @see {#auth}
     def authenticate(auth_id)
       auth(auth_id)
+    end
+
+    def get_auth # rubocop:disable Naming/AccessorMethodName
+      raise Errors::MissingAuthId unless @auth_id
+
+      headers = {
+        "Authorization": @secret_key,
+        "User-Agent": user_agent,
+        "Content-Type": "application/json"
+      }
+
+      url = "#{@auth_host}/apis/#{@integration_id}/auth/#{@auth_id}"
+
+      AuthDetails.new(make_request(method: "GET", url: url, query: nil, body: nil, headers: headers).data)
     end
 
     # Makes a HEAD request to the API configured for this integration and returns the response
@@ -108,7 +126,7 @@ class Bearer
     def request(method, endpoint, headers: nil, body: nil, query: nil)
       pre_headers = {
         "Authorization": @secret_key,
-        "User-Agent": "Bearer-Ruby (#{Bearer::VERSION})",
+        "User-Agent": user_agent,
         "Bearer-Auth-Id": @auth_id,
         "Bearer-Setup-Id": @setup_id,
         "Content-Type": "application/json"
@@ -168,6 +186,11 @@ class Bearer
     # @return [Hash]
     def http_client_settings
       Bearer::Configuration.http_client_settings.merge(@http_client_settings)
+    end
+
+    # @return [String]
+    def user_agent
+      "Bearer-Ruby (#{Bearer::VERSION})"
     end
 
     # rubocop:disable Metrics/MethodLength,Metrics/AbcSize

@@ -5,12 +5,14 @@ require "webmock/rspec"
 RSpec.describe Bearer::Integration do
   subject(:client) do
     described_class.new(
+      auth_host: auth_host,
       host: host,
       integration_id: integration_id,
       secret_key: secret_key
     )
   end
 
+  let(:auth_host) { "https://auth.example.com" }
   let(:host) { "https://int.example.com" }
   let(:integration_id) { "test-integration-id" }
   let(:secret_key) { "test-api-key" }
@@ -32,6 +34,38 @@ RSpec.describe Bearer::Integration do
   let(:success_headers) { { "Bearer-Request-Id" => "bearer-request-id" } }
   let(:body_payload) { { body: "data" } }
   let(:body) { body_payload.to_json }
+
+  describe "#get_auth" do
+    let(:auth_id) { "test-auth-id" }
+    let(:response_data) { { accessToken: { value: "test-token" } } }
+    let(:auth_details) { double(Bearer::AuthDetails) }
+
+    let(:sent_headers) do
+      {
+        'Accept'=>'*/*',
+        "Authorization" => secret_key,
+        "Content-Type" => "application/json",
+        "Host" => "auth.example.com",
+        "User-Agent" => "Bearer-Ruby (#{Bearer::VERSION})"
+      }
+    end
+
+    before do
+      stub_request(:get, "#{auth_host}/apis/#{integration_id}/auth/#{auth_id}")
+        .with(headers: sent_headers)
+        .to_return(status: 200, body: response_data.to_json)
+    end
+
+    it "raises an error when there is no auth id set" do
+      expect { client.get_auth }.to raise_error(Bearer::Errors::MissingAuthId)
+    end
+
+    it "fetches the auth details and translates them to a friendly format" do
+      expect(Bearer::AuthDetails).to receive(:new).with(response_data).and_return(auth_details)
+
+      expect(client.auth(auth_id).get_auth).to eq(auth_details)
+    end
+  end
 
   context "making requests" do
     let(:proxy_url) { "#{base_url}/test" }
@@ -186,6 +220,7 @@ RSpec.describe Bearer::Integration do
   describe "setting http client per integration" do
     subject(:client) do
       described_class.new(
+        auth_host: auth_host,
         host: host,
         integration_id: integration_id,
         secret_key: secret_key,

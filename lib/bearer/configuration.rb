@@ -15,12 +15,14 @@ class Bearer
   class Configuration
     include Singleton
 
+    PRODUCTION_AUTH_HOST = "https://auth.bearer.sh"
     PRODUCTION_INTEGRATION_HOST = "https://proxy.bearer.sh"
 
     FIELDS = %i[
       secret_key
       publishable_key
       encryption_key
+      auth_host
       host
       http_client_settings
       log_level
@@ -53,6 +55,11 @@ class Bearer
     # @return [Integer]
     def log_level
       @log_level ||= :info
+    end
+
+    # @return [String]
+    def auth_host
+      @auth_host ||= PRODUCTION_AUTH_HOST
     end
 
     # @return [String]
