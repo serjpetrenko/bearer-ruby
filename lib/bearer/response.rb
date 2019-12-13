@@ -69,7 +69,11 @@ class Bearer
     # object.
     def self.from_net_http(http_resp)
       resp = Bearer::Response.new
-      resp.data = JSON.parse(http_resp.body, symbolize_names: true)
+      begin
+        resp.data = JSON.parse(http_resp.body, symbolize_names: true)
+      rescue JSON::ParserError => _e
+        resp.data = "response body is not JSON parsable"
+      end
       resp.http_body = http_resp.body
       resp.http_headers = Headers.from_net_http(http_resp)
       resp.http_status = http_resp.code.to_i

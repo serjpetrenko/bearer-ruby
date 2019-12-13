@@ -19,11 +19,11 @@ class Bearer
 
     class TokenData
       attr_reader :client_id,
-        :expires_at,
-        :issued_at,
-        :scopes,
-        :token_type,
-        :value
+                  :expires_at,
+                  :issued_at,
+                  :scopes,
+                  :token_type,
+                  :value
 
       def initialize(raw_data)
         expect_scopes = [
@@ -51,18 +51,18 @@ class Bearer
     end
 
     attr_reader :access_token,
-      :callback_params,
-      :client_id,
-      :client_secret,
-      :consumer_key,
-      :consumer_secret,
-      :id_token,
-      :id_token_jwt,
-      :raw_data,
-      :refresh_token,
-      :token_response,
-      :token_secret,
-      :signature_method
+                :callback_params,
+                :client_id,
+                :client_secret,
+                :consumer_key,
+                :consumer_secret,
+                :id_token,
+                :id_token_jwt,
+                :raw_data,
+                :refresh_token,
+                :token_response,
+                :token_secret,
+                :signature_method
 
     # rubocop:disable Metrics/AbcSize
     def initialize(raw_data)
